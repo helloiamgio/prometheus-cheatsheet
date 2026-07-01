@@ -1,0 +1,364 @@
+/* ============================================================================
+   PROMETHEUS CHEATSHEET — Custom theme
+   Stessa identità visiva di openshift-cheatsheet / openshift-networking:
+   palette dark con accenti ambra, tipografia Fraunces / Inter / JetBrains Mono
+   ============================================================================ */
+
+:root {
+  --osh-bg: #0e1116;
+  --osh-bg-2: #161b22;
+  --osh-bg-3: #1c232c;
+  --osh-line: #2a323d;
+  --osh-line-2: #3a4452;
+  --osh-ink: #e6e9ee;
+  --osh-ink-2: #aab2bd;
+  --osh-ink-3: #717a86;
+  --osh-accent: #f0b429;
+  --osh-accent-2: #d97706;
+  --osh-green: #5dcaa5;
+  --osh-red: #e24b4a;
+  --osh-blue: #6fa8dc;
+  --osh-purple: #b8a4f0;
+  --osh-amber: #efa55a;
+  --osh-pink: #ed93b1;
+  --osh-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+  --osh-serif: 'Fraunces', Georgia, 'Times New Roman', serif;
+  --osh-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+/* ---- Tema dark-only forzato: nessuna dipendenza da data-theme ---- */
+:root, ::backdrop {
+  --sl-color-bg: var(--osh-bg);
+  --sl-color-bg-nav: var(--osh-bg-2);
+  --sl-color-bg-sidebar: var(--osh-bg);
+  --sl-color-bg-inline-code: var(--osh-bg-3);
+  --sl-color-bg-accent: var(--osh-accent);
+
+  --sl-color-white: var(--osh-ink);
+  --sl-color-gray-1: var(--osh-ink);
+  --sl-color-gray-2: var(--osh-ink-2);
+  --sl-color-gray-3: var(--osh-ink-2);
+  --sl-color-gray-4: var(--osh-ink-3);
+  --sl-color-gray-5: var(--osh-line-2);
+  --sl-color-gray-6: var(--osh-line);
+  --sl-color-gray-7: var(--osh-bg-3);
+  --sl-color-black: var(--osh-bg);
+
+  --sl-color-accent: var(--osh-accent);
+  --sl-color-accent-low: rgba(240, 180, 41, 0.12);
+  --sl-color-accent-high: var(--osh-accent);
+  --sl-color-text-accent: var(--osh-accent);
+
+  --sl-color-hairline: var(--osh-line);
+  --sl-color-hairline-light: var(--osh-line-2);
+  --sl-color-hairline-shade: var(--osh-line);
+}
+
+/* nasconde il toggle light/dark: il sito è dark-only per design */
+starlight-theme-select { display: none; }
+
+body {
+  background: var(--osh-bg);
+  background-image:
+    radial-gradient(circle at 10% 0%, rgba(240,180,41,0.04) 0%, transparent 40%),
+    radial-gradient(circle at 90% 100%, rgba(111,168,220,0.04) 0%, transparent 40%);
+  background-attachment: fixed;
+}
+
+::selection { background: var(--osh-accent); color: var(--osh-bg); }
+
+/* ---- HEADINGS ---- */
+.sl-markdown-content h1,
+.sl-markdown-content h2,
+.sl-markdown-content h3,
+.sl-markdown-content h4 {
+  font-family: var(--osh-serif);
+  letter-spacing: -0.02em;
+  color: var(--osh-ink) !important;
+}
+
+.sl-markdown-content h1 {
+  font-size: clamp(2.2rem, 5vw, 3.4rem);
+  font-weight: 800;
+  line-height: 1.05;
+  margin-bottom: 1.25rem;
+  position: relative;
+}
+
+.sl-markdown-content h1 em {
+  font-style: italic;
+  font-weight: 400;
+  color: var(--osh-accent) !important;
+}
+
+.sl-markdown-content h1:first-child::before {
+  content: 'PROMETHEUS · PROMQL REFERENCE';
+  display: block;
+  font-family: var(--osh-mono);
+  font-size: 0.7rem;
+  font-weight: 500;
+  color: var(--osh-accent);
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  margin-bottom: 1rem;
+}
+
+.sl-markdown-content h2 {
+  font-size: 1.85rem;
+  font-weight: 700;
+  margin-top: 3.5rem;
+  margin-bottom: 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--osh-line);
+  position: relative;
+}
+
+.sl-markdown-content h2::before {
+  content: '#';
+  position: absolute;
+  left: -1.6rem;
+  top: 0.05em;
+  font-family: var(--osh-mono);
+  color: var(--osh-accent);
+  font-size: 0.75em;
+  font-weight: 700;
+  opacity: 0.7;
+}
+
+.sl-markdown-content h3 {
+  font-size: 1.4rem;
+  font-weight: 600;
+  margin-top: 2.5rem;
+  margin-bottom: 0.8rem;
+  color: var(--osh-amber) !important;
+}
+
+.sl-markdown-content h4 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin-top: 2rem;
+  margin-bottom: 0.6rem;
+  color: var(--osh-blue) !important;
+}
+
+/* ---- BODY TEXT ---- */
+.sl-markdown-content p,
+.sl-markdown-content li {
+  font-family: var(--osh-sans);
+  color: var(--osh-ink) !important;
+  font-size: 0.96rem;
+  line-height: 1.7;
+}
+
+.sl-markdown-content strong { color: var(--osh-accent) !important; font-weight: 600; }
+.sl-markdown-content em { color: var(--osh-amber) !important; }
+
+/* ---- LINKS ---- */
+.sl-markdown-content a {
+  color: var(--osh-accent) !important;
+  text-decoration: none;
+  border-bottom: 1px dotted var(--osh-accent-2);
+  transition: all 0.15s ease;
+}
+.sl-markdown-content a:hover {
+  color: var(--osh-amber) !important;
+  border-bottom-style: solid;
+}
+
+/* ---- INLINE CODE ---- */
+.sl-markdown-content code:not(pre code) {
+  background: var(--osh-bg-3);
+  color: var(--osh-amber) !important;
+  font-family: var(--osh-mono);
+  font-size: 0.85em;
+  padding: 0.15em 0.45em;
+  border-radius: 4px;
+  border: 1px solid var(--osh-line);
+  font-weight: 500;
+}
+
+/* ---- CODE BLOCKS (query PromQL) ---- */
+.sl-markdown-content pre {
+  background: var(--osh-bg-2) !important;
+  border: 1px solid var(--osh-line);
+  border-left: 3px solid var(--osh-accent);
+  border-radius: 6px;
+  padding: 1.25rem 1.5rem;
+  margin: 1.25rem 0;
+  overflow-x: auto;
+  position: relative;
+  font-family: var(--osh-mono);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+}
+
+.sl-markdown-content pre::before {
+  content: 'PromQL';
+  position: absolute;
+  top: 0.5rem;
+  right: 0.75rem;
+  color: var(--osh-accent);
+  font-family: var(--osh-mono);
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  opacity: 0.5;
+}
+
+.sl-markdown-content pre code {
+  font-family: var(--osh-mono);
+  font-size: 0.85rem;
+  line-height: 1.6;
+  color: var(--osh-ink) !important;
+  background: transparent;
+}
+
+/* ---- BLOCKQUOTES ---- */
+.sl-markdown-content blockquote {
+  border-left: 3px solid var(--osh-blue);
+  background: rgba(111, 168, 220, 0.06);
+  padding: 1rem 1.5rem;
+  margin: 1.5rem 0;
+  border-radius: 0 6px 6px 0;
+  font-style: italic;
+  color: var(--osh-ink-2) !important;
+}
+
+/* ---- TABLES ---- */
+.sl-markdown-content table {
+  border-collapse: collapse;
+  margin: 1.5rem 0;
+  font-size: 0.9rem;
+  border: 1px solid var(--osh-line);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.sl-markdown-content th {
+  background: var(--osh-bg-2);
+  color: var(--osh-accent) !important;
+  font-family: var(--osh-mono);
+  font-size: 0.75rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-weight: 600;
+  padding: 0.8rem 1rem;
+  text-align: left;
+  border-bottom: 1px solid var(--osh-line-2);
+}
+
+.sl-markdown-content td {
+  padding: 0.7rem 1rem;
+  border-top: 1px solid var(--osh-line);
+  color: var(--osh-ink) !important;
+}
+
+.sl-markdown-content tr:nth-child(even) td {
+  background: rgba(255, 255, 255, 0.015);
+}
+
+/* ---- HR ---- */
+.sl-markdown-content hr {
+  border: none;
+  border-top: 1px solid var(--osh-line);
+  margin: 3rem 0;
+  position: relative;
+}
+
+.sl-markdown-content hr::after {
+  content: '◆';
+  position: absolute;
+  top: -0.65em;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--osh-bg);
+  padding: 0 0.8rem;
+  color: var(--osh-accent);
+  font-size: 0.8rem;
+}
+
+/* ---- LISTS ---- */
+.sl-markdown-content ul li::marker { color: var(--osh-accent); }
+.sl-markdown-content ol li::marker {
+  color: var(--osh-accent);
+  font-family: var(--osh-mono);
+  font-weight: 700;
+}
+
+/* ---- TOC (right rail) ---- */
+.right-sidebar nav h2 {
+  font-family: var(--osh-mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--osh-accent) !important;
+}
+.right-sidebar nav a { font-size: 0.82rem; color: var(--osh-ink-2) !important; }
+.right-sidebar nav a[aria-current='true'] { color: var(--osh-accent) !important; font-weight: 500; }
+
+/* ---- SEARCH BUTTON ---- */
+button[data-open-modal] {
+  border: 1px solid var(--osh-line) !important;
+  background: var(--osh-bg-2) !important;
+  font-family: var(--osh-mono) !important;
+  font-size: 0.8rem !important;
+}
+button[data-open-modal]:hover { border-color: var(--osh-accent) !important; }
+
+/* ---- ASIDE / CALLOUT ---- */
+.starlight-aside {
+  border-radius: 6px;
+  border: 1px solid var(--osh-line);
+  background: var(--osh-bg-2);
+}
+.starlight-aside--note { border-left: 3px solid var(--osh-blue); }
+.starlight-aside--tip { border-left: 3px solid var(--osh-green); }
+.starlight-aside--caution { border-left: 3px solid var(--osh-amber); }
+.starlight-aside--danger { border-left: 3px solid var(--osh-red); }
+
+/* ---- SCROLLBAR ---- */
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: var(--osh-bg); }
+::-webkit-scrollbar-thumb { background: var(--osh-line-2); border-radius: 5px; border: 2px solid var(--osh-bg); }
+::-webkit-scrollbar-thumb:hover { background: var(--osh-accent-2); }
+
+/* ---- RESPONSIVE ---- */
+@media (max-width: 50rem) {
+  .sl-markdown-content h1 { font-size: 2.1rem; }
+  .sl-markdown-content h2::before { display: none; }
+}
+
+/* ---- HERO / LANDING CARD GRID ---- */
+.osh-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 1rem;
+  margin: 2rem 0;
+}
+.osh-card {
+  border: 1px solid var(--osh-line);
+  background: var(--osh-bg-2);
+  border-radius: 8px;
+  padding: 1.25rem;
+  transition: all 0.2s ease;
+}
+.osh-card:hover {
+  border-color: var(--osh-accent);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(240, 180, 41, 0.08);
+}
+.osh-card h3 {
+  font-family: var(--osh-mono) !important;
+  font-size: 0.8rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--osh-accent) !important;
+  margin: 0 0 0.5rem 0 !important;
+  border: none;
+}
+.osh-card p { margin: 0; font-size: 0.88rem; color: var(--osh-ink-2) !important; }
+
+/* ---- Hero (template: splash) ---- */
+.hero > .stack { text-align: left !important; }
+.hero h1 { font-family: var(--osh-serif) !important; }
+.hero .tagline { color: var(--osh-ink-2) !important; font-family: var(--osh-sans); }

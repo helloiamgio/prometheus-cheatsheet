@@ -46,7 +46,101 @@ topk(10,
 )
 ```
 
-## Traffico visto da Envoy (metriche `istio_*`, non cAdvisor)
+## CPU/RAM del sidecar Envoy per un dato namespace, in core/GiB
+
+Domanda tipica: *"quanto CPU/RAM sta usando istio-proxy nel namespace X, in unità leggibili?"* — non in millicore grezzi o byte, ma in core e GiB come li leggi su `oc adm top` o sui dashboard capacity.
+
+### CPU istio-proxy nel namespace — istantaneo, in core
+
+```promql
+sum(
+  rate(container_cpu_usage_seconds_total{
+    namespace="<NAMESPACE>",
+    container="istio-proxy"
+  }[5m])
+)
+```
+
+Il risultato di `container_cpu_usage_seconds_total` è già in **secondi di CPU per secondo = core**. Non serve dividere per niente: `1.5` = 1.5 core, `0.25` = 250 millicore.
+
+### Memoria istio-proxy nel namespace — istantanea, in GiB
+
+```promql
+sum(
+  container_memory_working_set_bytes{
+    namespace="<NAMESPACE>",
+    container="istio-proxy"
+  }
+) / 1024 / 1024 / 1024
+```
+
+`container_memory_working_set_bytes` è in **byte**: `/ 1024^3` → GiB (base 2, coerente con i `Gi` di Kubernetes/OpenShift). Per GB decimali usa `/ 1e9`.
+
+### Stessa cosa ma per pod (per capire chi pesa di più dentro il namespace)
+
+```promql
+# CPU per pod (core)
+sum by (pod) (
+  rate(container_cpu_usage_seconds_total{namespace="<NAMESPACE>", container="istio-proxy"}[5m])
+)
+
+# Memoria per pod (GiB)
+sum by (pod) (
+  container_memory_working_set_bytes{namespace="<NAMESPACE>", container="istio-proxy"}
+) / 1024 / 1024 / 1024
+```
+
+### Picco su una finestra (es. 7 giorni) — utile per capacity planning, non solo istantaneo
+
+```promql
+# Picco CPU istio-proxy nel namespace (core, finestra 7d, step 5m)
+max_over_time(
+  sum(
+    rate(container_cpu_usage_seconds_total{namespace="<NAMESPACE>", container="istio-proxy"}[5m])
+  )
+[7d:5m])
+
+# Picco memoria istio-proxy nel namespace (GiB, finestra 7d, step 5m)
+max_over_time(
+  sum(
+    container_memory_working_set_bytes{namespace="<NAMESPACE>", container="istio-proxy"}
+  )
+[7d:5m]) / 1024 / 1024 / 1024
+```
+
+> La divisione per GiB va **fuori** dal `max_over_time`: l'aggregazione lavora sui byte grezzi, la conversione è solo l'ultimo step.
+
+### Confronto: quanto pesa il sidecar rispetto a TUTTO il namespace (app + proxy)
+
+```promql
+# % CPU del sidecar sul totale namespace
+sum(rate(container_cpu_usage_seconds_total{namespace="<NAMESPACE>", container="istio-proxy"}[5m]))
+/
+sum(rate(container_cpu_usage_seconds_total{namespace="<NAMESPACE>", container!="", container!="POD"}[5m]))
+* 100
+
+# % memoria del sidecar sul totale namespace
+sum(container_memory_working_set_bytes{namespace="<NAMESPACE>", container="istio-proxy"})
+/
+sum(container_memory_working_set_bytes{namespace="<NAMESPACE>", container!="", container!="POD"})
+* 100
+```
+
+### Multi-namespace in un colpo (dashboard/report)
+
+```promql
+# CPU per namespace, solo sidecar, in core
+sum by (namespace) (
+  rate(container_cpu_usage_seconds_total{container="istio-proxy"}[5m])
+)
+
+# Memoria per namespace, solo sidecar, in GiB
+sum by (namespace) (
+  container_memory_working_set_bytes{container="istio-proxy"}
+) / 1024 / 1024 / 1024
+```
+
+
 
 ### Richieste totali per servizio destinazione (RPS)
 

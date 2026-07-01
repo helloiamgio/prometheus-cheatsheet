@@ -14,6 +14,20 @@ export default defineConfig({
 			editLink: {
 				baseUrl: 'https://github.com/helloiamgio/prometheus-cheatsheet/edit/main/',
 			},
+			customCss: [
+				'./src/styles/custom.css',
+			],
+			expressiveCode: {
+				themes: ['github-dark-default'],
+				shiki: {
+					langAlias: {
+						promql: 'python',
+					},
+				},
+			},
+			logo: {
+				src: './src/assets/logo.svg',
+			},
 			sidebar: [
 				{
 					label: 'Overview',
