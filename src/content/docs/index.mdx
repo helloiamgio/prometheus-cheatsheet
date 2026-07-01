@@ -1,0 +1,37 @@
+---
+title: Prometheus Cheatsheet
+description: Query PromQL per Kubernetes / OpenShift, organizzate per oggetto.
+template: splash
+---
+
+## Prometheus Cheatsheet — Kubernetes / OpenShift
+
+Raccolta operativa di query PromQL organizzate **per oggetto** (Pod, Deploy, Node, Job, Network, Storage, Istio) per troubleshooting rapido, capacity planning e alerting.
+
+Fonti: [openshift-cheatsheet.pages.dev/prometheus-utils](https://openshift-cheatsheet.pages.dev/prometheus-utils/) · [github.com/helloiamgio/my-prometheus](https://github.com/helloiamgio/my-prometheus)
+
+### Filtro standard namespace applicativi
+
+```promql
+namespace!~"kube-.*|openshift-.*"
+```
+
+### Ordine di indagine in incidente (WR)
+
+> CPU → Memoria → Restart → Rete → Storage → Job
+> Correlare **spike + eventi** per identificare la root cause.
+
+### Metriche cAdvisor — attenzione alle label
+
+| Metrica | Cosa misura |
+|---|---|
+| `container_cpu_usage_seconds_total` | CPU cumulativa (counter) → serve `rate()`/`irate()` |
+| `container_memory_working_set_bytes` | memoria "attiva" → quella confrontata col limit per OOM |
+| `container_memory_rss` | memoria residente reale del processo |
+| `container_spec_cpu_quota` / `container_spec_cpu_period` | limit CPU effettivo (quota/period = core) |
+| `container_spec_memory_limit_bytes` | limit memoria del container |
+| `container_cpu_cfs_throttled_seconds_total` | tempo throttled dal CFS scheduler (evento certo, non stimato) |
+
+Filtri comuni da tenere sempre a mente:
+- `container!="", container!="POD"` → esclude il container `pause` e le serie senza container (livello pod)
+- in mesh Istio: `container="istio-proxy"` isola il sidecar Envoy, il resto è il/i container applicativi
