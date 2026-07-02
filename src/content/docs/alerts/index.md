@@ -155,6 +155,37 @@ kubelet_volume_stats_available_bytes / kubelet_volume_stats_capacity_bytes * 100
 predict_linear(kubelet_volume_stats_available_bytes[6h:5m], 4 * 24 * 3600) < 0
 ```
 
+## Control plane / infrastruttura (da runbook ufficiali openshift/runbooks)
+
+```promql
+# etcd members down
+count(up{job="etcd"} == 0) > 0
+
+# etcd leader changes eccessivi (instabilità)
+increase(etcd_server_leader_changes_seen_total{job="etcd"}[1h]) > 3
+
+# etcd gRPC richieste fallite (%)
+100 * (
+  sum without (grpc_type, grpc_code) (rate(grpc_server_handled_total{job="etcd", grpc_code=~"Unknown|FailedPrecondition|ResourceExhausted|Internal|Unavailable|DataLoss|DeadlineExceeded"}[5m]))
+  / sum without (grpc_type, grpc_code) (rate(grpc_server_handled_total{job="etcd"}[5m]))
+) > 10
+
+# PersistentVolume errors (KubePersistentVolumeErrors)
+kube_persistentvolume_status_phase{phase=~"Failed|Pending"} > 0
+
+# MachineConfigDaemon drain error (nodo bloccato in aggiornamento)
+mcd_drain_err > 0
+
+# OVN-Kubernetes retry falliti sulla riconciliazione risorse
+rate(ovnkube_resource_retry_failures_total[5m]) > 0
+
+# Nessun leader ovnkube-controller eletto (HA compromessa)
+sum(ovnkube_controller_leader) == 0
+
+# Router/Ingress: route con tutti i backend down (503 per gli utenti)
+sum by (namespace, route) (haproxy_server_up) == 0
+```
+
 ## API server
 
 ```promql

@@ -142,6 +142,49 @@ sum by (namespace) (
 
 
 
+## Sizing di riferimento (fonte Red Hat OpenShift Service Mesh / Maistra)
+
+Dati ufficiali dai load test Istio/OSSM (1000 servizi, mesh-wide RPS):
+
+| Componente | Consumo misurato |
+|---|---|
+| Envoy sidecar | **~0.5 vCPU e ~50 MB di RAM ogni 1000 richieste/secondo** attraversate |
+| istiod (control plane) | ~1 vCPU e ~1.5 GB RAM (dimensione mesh-dipendente) |
+| Overhead latenza aggiunto da Envoy | ~3 ms al p90 |
+
+Default OSSM su OpenShift (pensati per install "che parte", **non per produzione**): `spec.proxy` → `cpu: 10m`, `memory: 128M`. Vanno quasi sempre alzati dopo l'install iniziale, in base al traffico reale osservato con le query di questa pagina.
+
+Tuning via `ServiceMeshControlPlane`/`Istio` CR:
+
+```yaml
+spec:
+  proxy:
+    runtime:
+      container:
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            cpu: 1000m
+            memory: 512Mi
+```
+
+Override per singolo workload (annotazioni sul pod, utile se un solo servizio ha traffico anomalo rispetto al resto del mesh):
+
+```yaml
+metadata:
+  annotations:
+    sidecar.istio.io/proxyCPU: "200m"
+    sidecar.istio.io/proxyMemory: "256Mi"
+    sidecar.istio.io/proxyCPULimit: "1000m"
+    sidecar.istio.io/proxyMemoryLimit: "512Mi"
+```
+
+> Regola pratica: usa le query `topk` di questa pagina per trovare i namespace/pod dove il sidecar è vicino al limit, poi decidi se alzare il default globale (SMCP) o fare override mirato (annotazione) solo su quei workload — evitando di sovradimensionare l'intero mesh.
+
+## Traffico visto da Envoy (metriche `istio_*`, non cAdvisor)
+
 ### Richieste totali per servizio destinazione (RPS)
 
 ```promql

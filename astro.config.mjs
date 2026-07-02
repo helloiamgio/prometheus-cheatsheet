@@ -33,6 +33,7 @@ export default defineConfig({
 					label: 'Overview',
 					items: [
 						{ label: 'Home', slug: 'index' },
+						{ label: 'Fonti & Riferimenti', slug: 'fonti' },
 					],
 				},
 				{
@@ -57,6 +58,7 @@ export default defineConfig({
 						{ label: 'CPU / RAM / Capacity per nodo', slug: 'node' },
 						{ label: 'Node NotReady - Runbook', slug: 'node/notready-runbook' },
 						{ label: 'Pressure & Disk', slug: 'node/pressure' },
+						{ label: 'etcd & Control Plane', slug: 'node/etcd-control-plane' },
 					],
 				},
 				{
@@ -71,6 +73,8 @@ export default defineConfig({
 						{ label: 'Traffico pod / interfacce', slug: 'network' },
 						{ label: 'DNS / CoreDNS', slug: 'network/dns' },
 						{ label: 'API Server & Client', slug: 'network/apiserver' },
+						{ label: 'OVN-Kubernetes internals', slug: 'network/ovn' },
+						{ label: 'Router / Ingress (HAProxy)', slug: 'network/router-ingress' },
 					],
 				},
 				{
