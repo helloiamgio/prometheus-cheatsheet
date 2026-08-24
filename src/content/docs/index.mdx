@@ -3,14 +3,14 @@ title: Prometheus Cheatsheet
 description: Query PromQL per Kubernetes / OpenShift, organizzate per oggetto.
 template: splash
 hero:
-  tagline: Query PromQL per Kubernetes / OpenShift — organizzate per oggetto (Pod, Deploy, Node, Job, Network, Storage, Istio), pronte per troubleshooting WR, capacity planning e alerting.
+  tagline: Query PromQL per Kubernetes / OpenShift — organizzate per oggetto (Pod, Deploy, Node, Job, Network, Storage, Istio, JVM), pronte per troubleshooting WR, capacity planning e alerting.
   actions:
     - text: Inizia da Pod / Container
       link: /pod/
       icon: right-arrow
       variant: primary
     - text: GitHub
-      link: https://github.com/helloiamgio/my-prometheus
+      link: https://github.com/helloiamgio/prometheus-cheatsheet
       icon: external
 ---
 
@@ -54,6 +54,9 @@ namespace!~"kube-.*|openshift-.*"
   <Card title="Istio / Service Mesh" icon="puzzle">
     Overhead del sidecar Envoy in **core/GiB per namespace**, traffico, mTLS, control plane.
   </Card>
+  <Card title="JVM / Java" icon="seti:java">
+    Pause GC e **suspension %**, heap vs limit del container, leak o undersizing, metriche Micrometer/jmx_exporter.
+  </Card>
   <Card title="Alert Rules" icon="warning">
     Regole di alerting pronte all'uso, per oggetto.
   </Card>
@@ -73,7 +76,8 @@ namespace!~"kube-.*|openshift-.*"
 Filtri comuni da tenere sempre a mente:
 - `container!="", container!="POD"` → esclude il container `pause` e le serie senza container (livello pod)
 - in mesh Istio: `container="istio-proxy"` isola il sidecar Envoy, il resto è il/i container applicativi
+- per workload Java: cAdvisor **non vede l'heap** — le metriche `container_*` misurano il cgroup, non la JVM
 
-Fonti: [openshift-cheatsheet.pages.dev/prometheus-utils](https://openshift-cheatsheet.pages.dev/prometheus-utils/) · [github.com/helloiamgio/my-prometheus](https://github.com/helloiamgio/my-prometheus) · [github.com/openshift/runbooks](https://github.com/openshift/runbooks) · [Red Hat Docs — OpenShift Monitoring](https://docs.redhat.com/en/documentation/openshift_container_platform/latest/html/monitoring/index) · [Red Hat OpenShift Service Mesh — Performance & Scalability](https://docs.openshift.com/rosa/service_mesh/v2x/ossm-performance-scalability.html)
+Fonti: [openshift-cheatsheet.pages.dev/prometheus-utils](https://openshift-cheatsheet.pages.dev/prometheus-utils/) · [github.com/helloiamgio/prometheus-cheatsheet](https://github.com/helloiamgio/prometheus-cheatsheet) · [github.com/openshift/runbooks](https://github.com/openshift/runbooks) · [Red Hat Docs — OpenShift Monitoring](https://docs.redhat.com/en/documentation/openshift_container_platform/latest/html/monitoring/index) · [Red Hat OpenShift Service Mesh — Performance & Scalability](https://docs.openshift.com/rosa/service_mesh/v2x/ossm-performance-scalability.html)
 
 > Alcune soluzioni KCS di Red Hat (`access.redhat.com/solutions/...`) sono citate per titolo/numero dove pertinenti, ma il contenuto completo richiede una subscription attiva — non riproducibile qui.
