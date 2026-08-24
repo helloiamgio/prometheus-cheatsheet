@@ -98,6 +98,14 @@ export default defineConfig({
 						{ label: 'Control plane (istiod)', slug: 'istio/control-plane' },
 					],
 				},
+                                				{
+					label: 'JVM / Java',
+					items: [
+						{ label: 'Panoramica & Runbook GC', slug: 'jvm' },
+						{ label: 'Heap, limit & throttling', slug: 'jvm/heap-limit' },
+						{ label: 'Metriche JVM & Alerting', slug: 'jvm/metriche' },
+					],
+				},
 				{
 					label: 'Alert Rules',
 					items: [
