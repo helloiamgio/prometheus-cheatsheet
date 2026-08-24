@@ -19,20 +19,28 @@ cAdvisor/kubelet **non vedono dentro la JVM**. Le metriche `container_*` misuran
 
 Regola pratica: **senza exporter JVM, saturazione memoria e throttling CPU spiegano la quasi totalità degli allarmi GC**. Se entrambi sono bassi il problema è applicativo — allocation rate, oggetti long-lived — e servono i dati JVM.
 
-## Parametri
+## Come si usano queste query
 
-Le query di questa sezione usano tre placeholder:
+Unica variabile da sostituire: **`$NS`**, il namespace.
+
+Ogni query è scritta in due forme.
+
+**1. Tutto il namespace** — default in fase di troubleshooting. Il risultato è raggruppato `by (pod, container)`: incolli, guardi la lista e individui subito chi soffre, senza sapere in anticipo il nome del pod.
+
+**2. Filtro sui pod** — quando hai già il nome dall'alert. Aggiungi il selettore al matcher:
 
 ```
-$NS    → namespace          es. r4396-riquadro-be
-$APP   → nome container     es. rq-vop-gateway
-$POD   → regex sui pod      es. rq-vop-gateway-.*
+pod=~"nome-app-.*"
 ```
 
-Con sidecar Istio il filtro `container` è **obbligatorio**: senza, le metriche sommano applicativo ed Envoy. Verifica il nome esatto del container applicativo:
+Il filtro `container!="", container!="POD"` è sempre presente: esclude il container `pause` e le serie a livello pod, che altrimenti raddoppiano i valori.
+
+Con sidecar Istio le metriche sommano applicativo ed Envoy. Il raggruppamento `by (pod, container)` li separa automaticamente; per isolare l'uno o l'altro usa `container="istio-proxy"` oppure `container!="istio-proxy"`.
+
+Elenco dei container di un namespace, se serve:
 
 ```promql
-kube_pod_container_info{namespace="$NS"}
+count by (pod, container) (kube_pod_container_info{namespace="$NS"})
 ```
 
 ## Runbook
@@ -67,10 +75,14 @@ Se i primi cinque punti sono puliti il problema è dentro l'applicazione.
 
 `-Xmx` non dovrebbe superare il **70-75% del limit memoria** del container: il resto serve a metaspace, code cache, thread stack, direct buffer e allocazioni native. Con `-XX:MaxRAMPercentage` il calcolo è automatico ma il default della JVM (25%) è quasi sempre troppo conservativo e spreca metà del limit.
 
+Limit configurati nel namespace, in GiB:
+
 ```promql
-kube_pod_container_resource_limits{namespace="$NS",container="$APP"} / 1024^3
+kube_pod_container_resource_limits{namespace="$NS",resource="memory"} / 1024^3
 ```
 
+Flag JVM effettivi:
+
 ```bash
-oc -n $NS set env deploy/$APP --list | grep -Ei 'JAVA_OPTS|JAVA_TOOL_OPTIONS|XMX|XMS|MaxRAM'
+oc -n $NS get deploy -o custom-columns='NAME:.metadata.name,ENV:.spec.template.spec.containers[*].env[?(@.name=="JAVA_OPTS")].value'
 ```
