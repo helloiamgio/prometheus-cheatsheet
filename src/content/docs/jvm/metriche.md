@@ -39,17 +39,27 @@ data:
 
 ## Equivalenza dei nomi metrica
 
-I due exporter usano naming diversi. Verifica quale hai prima di copiare le query.
+I due exporter usano naming diverso. Verifica quale hai prima di copiare le query.
 
-| Concetto | Micrometer (Spring Boot) | jmx_exporter |
-|---|---|---|
-| Heap usato | `jvm_memory_used_bytes{area="heap"}` | `jvm_memory_bytes_used{area="heap"}` |
-| Heap max | `jvm_memory_max_bytes{area="heap"}` | `jvm_memory_bytes_max{area="heap"}` |
-| Pool specifico | `jvm_memory_used_bytes{id="G1 Old Gen"}` | `jvm_memory_pool_bytes_used{pool="G1 Old Gen"}` |
-| Tempo GC | `jvm_gc_pause_seconds_sum` | `jvm_gc_collection_seconds_sum` |
-| Numero GC | `jvm_gc_pause_seconds_count` | `jvm_gc_collection_seconds_count` |
-| Thread vivi | `jvm_threads_live_threads` | `jvm_threads_current` |
-| Classi caricate | `jvm_classes_loaded_classes` | `jvm_classes_loaded` |
+### Micrometer (Spring Boot Actuator)
+
+- heap usato — `jvm_memory_used_bytes{area="heap"}`
+- heap max — `jvm_memory_max_bytes{area="heap"}`
+- pool specifico — `jvm_memory_used_bytes{id="G1 Old Gen"}`
+- tempo GC — `jvm_gc_pause_seconds_sum`
+- numero GC — `jvm_gc_pause_seconds_count`
+- thread vivi — `jvm_threads_live_threads`
+- classi caricate — `jvm_classes_loaded_classes`
+
+### jmx_exporter
+
+- heap usato — `jvm_memory_bytes_used{area="heap"}`
+- heap max — `jvm_memory_bytes_max{area="heap"}`
+- pool specifico — `jvm_memory_pool_bytes_used{pool="G1 Old Gen"}`
+- tempo GC — `jvm_gc_collection_seconds_sum`
+- numero GC — `jvm_gc_collection_seconds_count`
+- thread vivi — `jvm_threads_current`
+- classi caricate — `jvm_classes_loaded`
 
 Le query sotto usano il naming Micrometer.
 

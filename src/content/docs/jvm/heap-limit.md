@@ -173,7 +173,7 @@ Per OOMKill, restart e correlazione con `terminated reason` vedi [Restart e OOM]
 
 ## 5. Isolare applicativo e sidecar
 
-In un pod con sidecar Istio il filtro `container` separa l'heap dall'overhead Envoy. Per le metriche di mesh vedi [Istio](/istio/).
+In un pod con sidecar Istio il filtro `container` separa l'heap dall'overhead Envoy. Per le metriche di mesh vedi [Multi-container](/pod/multicontainer/).
 
 ### Memoria del solo sidecar per namespace
 

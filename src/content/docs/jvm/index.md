@@ -9,13 +9,13 @@ sidebar:
 
 cAdvisor/kubelet **non vedono dentro la JVM**. Le metriche `container_*` misurano il cgroup, non l'heap. Le metriche `jvm_*` esistono solo se il pod espone un endpoint Micrometer o `jmx_exporter`.
 
-| Sintomo APM (Dynatrace / AppDynamics) | Proxy da metriche container | Affidabilità |
+| Sintomo APM | Proxy da metriche container | Affidabilità |
 |---|---|---|
-| `Long garbage-collection time` | saturazione memoria vs limit + CPU throttling | indiretta, alta |
-| `Suspension %` in salita | `rate(jvm_gc_pause_seconds_sum[5m]) * 100` | diretta, serve exporter |
-| `Memory leak detected` | `deriv(container_memory_working_set_bytes[6h])` costante > 0 | indiretta, media |
-| `Process crash` | `kube_pod_container_status_last_terminated_reason{reason="OOMKilled"}` | diretta |
-| Heap old gen piena | `jvm_memory_used_bytes{id=~".*Old Gen"}` | diretta, serve exporter |
+| Long garbage-collection time | saturazione memoria vs limit, CPU throttling | indiretta, alta |
+| Suspension % in salita | `rate(jvm_gc_pause_seconds_sum[5m])` | diretta, serve exporter |
+| Memory leak detected | `deriv(container_memory_working_set_bytes[6h])` | indiretta, media |
+| Process crash | `kube_pod_container_status_last_terminated_reason` | diretta |
+| Heap old gen piena | `jvm_memory_used_bytes{area="heap"}` | diretta, serve exporter |
 
 Regola pratica: **senza exporter JVM, saturazione memoria e throttling CPU spiegano la quasi totalità degli allarmi GC**. Se entrambi sono bassi il problema è applicativo — allocation rate, oggetti long-lived — e servono i dati JVM.
 
@@ -39,12 +39,29 @@ kube_pod_container_info{namespace="$NS"}
 
 Ordine di indagine a partire da un allarme GC dell'APM.
 
-1. **Saturazione memoria vs limit** → [Heap e limit](/jvm/heap-limit/#1-saturazione-memoria-vs-limit). Sopra 85% stabile la JVM entra in ciclo di GC continuo ben prima dell'OOMKill: vai al punto 3.
-2. **Throttling CPU** → [Heap e limit](/jvm/heap-limit/#2-cpu-throttling). Sopra 25% i thread del collector non ottengono quota CFS e le pause si allungano anche con heap abbondante. Alza il limit CPU prima di toccare la memoria. Molto spesso l'indagine finisce qui.
-3. **Leak o undersizing** → [Heap e limit](/jvm/heap-limit/#3-leak-o-undersizing). Derivata a 6h positiva e costante più minimo settimanale crescente = leak, serve heap dump. Curva piatta ad alto livello = undersizing, basta il rightsizing.
-4. **OOMKill e restart** → [Restart e OOM](/pod/restart-oom/). Se il container viene ucciso verifica il rapporto `-Xmx` / limit.
-5. **Sidecar mesh** → [Istio control plane](/istio/control-plane/). Envoy concorre al totale del pod ma non all'heap.
-6. **Metriche JVM** → [Metriche JVM](/jvm/metriche/). Se i primi cinque punti sono puliti il problema è dentro l'applicazione.
+**1. Saturazione memoria vs limit** → [Heap e limit](/jvm/heap-limit/)
+
+Sopra 85% stabile la JVM entra in ciclo di GC continuo ben prima dell'OOMKill: vai al punto 3.
+
+**2. Throttling CPU** → [Heap e limit](/jvm/heap-limit/)
+
+Sopra 25% i thread del collector non ottengono quota CFS e le pause si allungano anche con heap abbondante. Alza il limit CPU prima di toccare la memoria. Molto spesso l'indagine finisce qui.
+
+**3. Leak o undersizing** → [Heap e limit](/jvm/heap-limit/)
+
+Derivata a 6h positiva e costante più minimo settimanale crescente = leak, serve heap dump. Curva piatta ad alto livello = undersizing, basta il rightsizing.
+
+**4. OOMKill e restart** → [Restart / CrashLoop / OOM](/pod/restart-oom/)
+
+Se il container viene ucciso verifica il rapporto `-Xmx` / limit.
+
+**5. Sidecar mesh** → [Multi-container](/pod/multicontainer/)
+
+Envoy concorre al totale del pod ma non all'heap.
+
+**6. Metriche JVM** → [Metriche JVM](/jvm/metriche/)
+
+Se i primi cinque punti sono puliti il problema è dentro l'applicazione.
 
 ## Dimensionamento heap
 
