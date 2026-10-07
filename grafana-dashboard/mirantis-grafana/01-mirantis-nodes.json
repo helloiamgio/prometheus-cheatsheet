@@ -1,0 +1,2606 @@
+{
+  "title": "Mirantis Nodes",
+  "uid": "k8s_node_ready_mirantis_v1",
+  "editable": true,
+  "graphTooltip": 1,
+  "liveNow": false,
+  "description": "Stato Ready dei nodi: quando, quanto e causa probabile.",
+  "refresh": "1m",
+  "schemaVersion": 39,
+  "version": 1,
+  "time": {
+    "from": "now-24h",
+    "to": "now"
+  },
+  "timezone": "",
+  "tags": [
+    "kubernetes",
+    "mirantis",
+    "nodi",
+    "rca"
+  ],
+  "links": [
+    {
+      "title": "Mirantis Nodes",
+      "type": "link",
+      "url": "/d/k8s_node_ready_mirantis_v1",
+      "keepTime": true,
+      "includeVars": false,
+      "icon": "dashboard"
+    },
+    {
+      "title": "Mirantis Restart Container",
+      "type": "link",
+      "url": "/d/k8s_restart_rca_mirantis_v1",
+      "keepTime": true,
+      "includeVars": false,
+      "icon": "dashboard"
+    },
+    {
+      "title": "Mirantis Analisi Pod",
+      "type": "link",
+      "url": "/d/k8s_pod_rca_mirantis_v1",
+      "keepTime": true,
+      "includeVars": false,
+      "icon": "dashboard"
+    }
+  ],
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "type": "grafana",
+          "uid": "-- Grafana --"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "templating": {
+    "list": [
+      {
+        "name": "datasource",
+        "label": "Datasource",
+        "type": "datasource",
+        "query": "prometheus",
+        "refresh": 1,
+        "hide": 0,
+        "includeAll": false,
+        "multi": false,
+        "current": {
+          "text": "Prometheus",
+          "value": "Prometheus"
+        }
+      },
+      {
+        "name": "node",
+        "label": "Nodo",
+        "type": "query",
+        "datasource": {
+          "type": "prometheus",
+          "uid": "${datasource}"
+        },
+        "definition": "label_values(kube_node_info, node)",
+        "query": {
+          "query": "label_values(kube_node_info, node)",
+          "refId": "StandardVariableQuery"
+        },
+        "refresh": 2,
+        "sort": 1,
+        "hide": 0,
+        "includeAll": true,
+        "allValue": ".*",
+        "multi": true,
+        "current": {
+          "selected": true,
+          "text": "All",
+          "value": "$__all"
+        }
+      }
+    ]
+  },
+  "panels": [
+    {
+      "type": "row",
+      "id": 2,
+      "title": "Legenda",
+      "collapsed": true,
+      "panels": [
+        {
+          "type": "text",
+          "id": 1,
+          "title": "Legenda",
+          "gridPos": {
+            "x": 0,
+            "y": 1,
+            "w": 24,
+            "h": 12
+          },
+          "options": {
+            "mode": "markdown",
+            "content": "**Stati Ready**\n- **Unknown**: il control plane non riceve più il rinnovo del Lease dal kubelet (oltre ~40s). Il nodo può essere acceso e i container in esecuzione.\n- **NotReady**: il kubelet risponde ma dichiara il nodo non pronto (runtime, rete CNI, PLEG, pressure).\n\n**Causa probabile** (in ordine di priorità)\n1. **VM riavviata**: il boot time del nodo è cambiato nel periodo.\n2. **Evento cluster-wide**: nello stesso momento oltre metà dei nodi non era Ready. Causa sul control plane (apiserver, etcd, manager MKE), non sul nodo.\n3. **Nodo irraggiungibile**: Prometheus non raggiungeva né kubelet né node-exporter. VM bloccata o spenta, rete, hypervisor.\n4. **Pressure sul nodo**: Memory/Disk/PID pressure attivata nel periodo.\n5. **Kubelet non risponde / non raggiunge l'apiserver**: node-exporter raggiungibile, kubelet no. Verificare `docker logs ucp-kubelet` (errori *Failed to update lease*) e la sezione *Analisi kubelet e control plane*.\n6. **Lease non rinnovato con kubelet attivo**: kubelet e node-exporter raggiungibili. Lentezza di apiserver/etcd.\n\n**Impatto sui servizi**: dopo ~40s di Unknown/NotReady i pod del nodo vengono rimossi dagli endpoint dei Service; dopo 5 minuti consecutivi scatta l'eviction. Episodi brevi = riduzione di capacità, non fermo, se le repliche sono distribuite su più nodi."
+          }
+        }
+      ],
+      "gridPos": {
+        "x": 0,
+        "y": 0,
+        "w": 24,
+        "h": 1
+      }
+    },
+    {
+      "type": "row",
+      "id": 3,
+      "title": "Riepilogo",
+      "collapsed": false,
+      "panels": [],
+      "gridPos": {
+        "x": 0,
+        "y": 1,
+        "w": 24,
+        "h": 1
+      }
+    },
+    {
+      "type": "stat",
+      "id": 4,
+      "title": "Nodi totali",
+      "description": "",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 2,
+        "w": 3,
+        "h": 4
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "decimals": 0,
+          "unit": "short",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "blue",
+                "value": null
+              }
+            ]
+          },
+          "noValue": "0"
+        },
+        "overrides": []
+      },
+      "options": {
+        "colorMode": "background",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "textMode": "value",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "count(kube_node_info{node=~\"$node\"})",
+          "legendFormat": "__auto",
+          "refId": "A",
+          "range": false,
+          "instant": true,
+          "format": "table"
+        }
+      ]
+    },
+    {
+      "type": "stat",
+      "id": 5,
+      "title": "Non Ready ora",
+      "description": "",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "x": 3,
+        "y": 2,
+        "w": 4,
+        "h": 4
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "decimals": 0,
+          "unit": "short",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 1
+              }
+            ]
+          },
+          "noValue": "0"
+        },
+        "overrides": []
+      },
+      "options": {
+        "colorMode": "background",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "textMode": "value",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "count(max by(node) (kube_node_status_condition{condition=\"Ready\", status=~\"false|unknown\", node=~\"$node\"}) == 1) or vector(0)",
+          "legendFormat": "__auto",
+          "refId": "A",
+          "range": false,
+          "instant": true,
+          "format": "table"
+        }
+      ]
+    },
+    {
+      "type": "stat",
+      "id": 6,
+      "title": "Con indisponibilità nel periodo",
+      "description": "",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "x": 7,
+        "y": 2,
+        "w": 4,
+        "h": 4
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "decimals": 0,
+          "unit": "short",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 1
+              }
+            ]
+          },
+          "noValue": "0"
+        },
+        "overrides": []
+      },
+      "options": {
+        "colorMode": "background",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "textMode": "value",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "count((max by(node) (max_over_time((max by(node) (kube_node_status_condition{condition=\"Ready\", status=~\"false|unknown\", node=~\"$node\"}) == 1)[$__range:30s])) > 0)) or vector(0)",
+          "legendFormat": "__auto",
+          "refId": "A",
+          "range": false,
+          "instant": true,
+          "format": "table"
+        }
+      ]
+    },
+    {
+      "type": "stat",
+      "id": 7,
+      "title": "Episodi totali",
+      "description": "",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "x": 11,
+        "y": 2,
+        "w": 3,
+        "h": 4
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "decimals": 0,
+          "unit": "short",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 1
+              }
+            ]
+          },
+          "noValue": "0"
+        },
+        "overrides": []
+      },
+      "options": {
+        "colorMode": "background",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "textMode": "value",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "sum(ceil(max by(node) (changes((max by(node) (kube_node_status_condition{condition=\"Ready\", status=~\"false|unknown\", node=~\"$node\"}))[$__range:30s])) / 2) and on(node) (max by(node) (max_over_time((max by(node) (kube_node_status_condition{condition=\"Ready\", status=~\"false|unknown\", node=~\"$node\"}) == 1)[$__range:30s])) > 0)) or vector(0)",
+          "legendFormat": "__auto",
+          "refId": "A",
+          "range": false,
+          "instant": true,
+          "format": "table"
+        }
+      ]
+    },
+    {
+      "type": "stat",
+      "id": 8,
+      "title": "Nodi riavviati",
+      "description": "",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "x": 14,
+        "y": 2,
+        "w": 3,
+        "h": 4
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "decimals": 0,
+          "unit": "short",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 1
+              }
+            ]
+          },
+          "noValue": "0"
+        },
+        "overrides": []
+      },
+      "options": {
+        "colorMode": "background",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "textMode": "value",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "count(max by(node) (label_replace(changes(node_boot_time_seconds[$__range]) * on(instance) group_left(nodename) max by(instance,nodename) (last_over_time(node_uname_info{nodename=~\"(?i)($node)([.].*)?\"}[$__range])), \"node\", \"$1\", \"nodename\", \"([^.]+).*\")) > 0) or vector(0)",
+          "legendFormat": "__auto",
+          "refId": "A",
+          "range": false,
+          "instant": true,
+          "format": "table"
+        }
+      ]
+    },
+    {
+      "type": "stat",
+      "id": 9,
+      "title": "Nodi con pressure",
+      "description": "",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "x": 17,
+        "y": 2,
+        "w": 4,
+        "h": 4
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "decimals": 0,
+          "unit": "short",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 1
+              }
+            ]
+          },
+          "noValue": "0"
+        },
+        "overrides": []
+      },
+      "options": {
+        "colorMode": "background",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "textMode": "value",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "count(count by(node) (max by(node,condition) (max_over_time((kube_node_status_condition{node=~\"$node\", status=\"true\", condition=~\"MemoryPressure|DiskPressure|PIDPressure|NetworkUnavailable\"} == 1)[$__range:30s]))) > 0) or vector(0)",
+          "legendFormat": "__auto",
+          "refId": "A",
+          "range": false,
+          "instant": true,
+          "format": "table"
+        }
+      ]
+    },
+    {
+      "type": "stat",
+      "id": 10,
+      "title": "Cordoned ora",
+      "description": "",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "x": 21,
+        "y": 2,
+        "w": 3,
+        "h": 4
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "decimals": 0,
+          "unit": "short",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 1
+              }
+            ]
+          },
+          "noValue": "0"
+        },
+        "overrides": []
+      },
+      "options": {
+        "colorMode": "background",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "textMode": "value",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "count(kube_node_spec_unschedulable{node=~\"$node\"} == 1) or vector(0)",
+          "legendFormat": "__auto",
+          "refId": "A",
+          "range": false,
+          "instant": true,
+          "format": "table"
+        }
+      ]
+    },
+    {
+      "type": "row",
+      "id": 11,
+      "title": "Dettaglio per nodo",
+      "collapsed": false,
+      "panels": [],
+      "gridPos": {
+        "x": 0,
+        "y": 6,
+        "w": 24,
+        "h": 1
+      }
+    },
+    {
+      "type": "table",
+      "id": 12,
+      "title": "Nodi con indisponibilità nel periodo",
+      "description": "Una riga per nodo non Ready almeno una volta nel periodo. Episodi = numero di uscite da Ready. Orari nel fuso del browser. Per la causa vedi Legenda.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 7,
+        "w": 24,
+        "h": 10
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "decimals": 0,
+          "noValue": "Nessun nodo non Ready nel periodo",
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "filterable": true
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 1
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Nodo"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 170
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Stato ora"
+            },
+            "properties": [
+              {
+                "id": "mappings",
+                "value": [
+                  {
+                    "type": "value",
+                    "options": {
+                      "0": {
+                        "text": "Ready",
+                        "color": "green",
+                        "index": 0
+                      },
+                      "1": {
+                        "text": "NotReady",
+                        "color": "red",
+                        "index": 1
+                      },
+                      "2": {
+                        "text": "Unknown",
+                        "color": "orange",
+                        "index": 2
+                      }
+                    }
+                  }
+                ]
+              },
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-background",
+                  "mode": "basic"
+                }
+              },
+              {
+                "id": "custom.width",
+                "value": 100
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Causa probabile"
+            },
+            "properties": [
+              {
+                "id": "mappings",
+                "value": [
+                  {
+                    "type": "value",
+                    "options": {
+                      "2": {
+                        "text": "VM riavviata",
+                        "color": "red",
+                        "index": 0
+                      },
+                      "6": {
+                        "text": "Evento cluster-wide (control plane / etcd)",
+                        "color": "purple",
+                        "index": 1
+                      },
+                      "1": {
+                        "text": "Nodo irraggiungibile (VM, rete, hypervisor)",
+                        "color": "red",
+                        "index": 2
+                      },
+                      "5": {
+                        "text": "Pressure sul nodo (risorse)",
+                        "color": "orange",
+                        "index": 3
+                      },
+                      "3": {
+                        "text": "Kubelet non risponde / non raggiunge l'apiserver",
+                        "color": "orange",
+                        "index": 4
+                      },
+                      "4": {
+                        "text": "Lease non rinnovato con kubelet attivo (apiserver / etcd)",
+                        "color": "yellow",
+                        "index": 5
+                      }
+                    }
+                  }
+                ]
+              },
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-text"
+                }
+              },
+              {
+                "id": "custom.width",
+                "value": 400
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Tipo"
+            },
+            "properties": [
+              {
+                "id": "mappings",
+                "value": [
+                  {
+                    "type": "value",
+                    "options": {
+                      "1": {
+                        "text": "NotReady",
+                        "color": "red",
+                        "index": 0
+                      },
+                      "2": {
+                        "text": "Unknown",
+                        "color": "orange",
+                        "index": 1
+                      }
+                    }
+                  }
+                ]
+              },
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-text"
+                }
+              },
+              {
+                "id": "custom.width",
+                "value": 95
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Tempo non Ready"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "s"
+              },
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-background",
+                  "mode": "basic"
+                }
+              },
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "green",
+                      "value": null
+                    },
+                    {
+                      "color": "orange",
+                      "value": 1
+                    },
+                    {
+                      "color": "red",
+                      "value": 300
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "custom.width",
+                "value": 130
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Episodi"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 80
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Primo episodio"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "dateTimeAsIso"
+              },
+              {
+                "id": "custom.width",
+                "value": 165
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Ultimo episodio"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "dateTimeAsIso"
+              },
+              {
+                "id": "custom.width",
+                "value": 165
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Riavvii"
+            },
+            "properties": [
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-background",
+                  "mode": "basic"
+                }
+              },
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "green",
+                      "value": null
+                    },
+                    {
+                      "color": "red",
+                      "value": 1
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "custom.width",
+                "value": 80
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Kubelet irraggiungibile"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "s"
+              },
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-background",
+                  "mode": "basic"
+                }
+              },
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "green",
+                      "value": null
+                    },
+                    {
+                      "color": "red",
+                      "value": 1
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Node-exporter irraggiungibile"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "s"
+              },
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-background",
+                  "mode": "basic"
+                }
+              },
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "green",
+                      "value": null
+                    },
+                    {
+                      "color": "red",
+                      "value": 1
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Pressure"
+            },
+            "properties": [
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-background",
+                  "mode": "basic"
+                }
+              },
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "green",
+                      "value": null
+                    },
+                    {
+                      "color": "orange",
+                      "value": 1
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "custom.width",
+                "value": 90
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "cellHeight": "sm",
+        "showHeader": true,
+        "footer": {
+          "show": false,
+          "reducer": [
+            "sum"
+          ],
+          "fields": ""
+        },
+        "sortBy": [
+          {
+            "displayName": "Tempo non Ready",
+            "desc": true
+          }
+        ]
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "(max by(node) ((kube_node_status_condition{condition=\"Ready\", status=\"false\", node=~\"$node\"} == 1) * 1 or (kube_node_status_condition{condition=\"Ready\", status=\"unknown\", node=~\"$node\"} == 1) * 2 or (kube_node_status_condition{condition=\"Ready\", status=\"true\", node=~\"$node\"} == 1) * 0)) and on(node) (max by(node) (max_over_time((max by(node) (kube_node_status_condition{condition=\"Ready\", status=~\"false|unknown\", node=~\"$node\"}) == 1)[$__range:30s])) > 0)",
+          "legendFormat": "__auto",
+          "refId": "A",
+          "range": false,
+          "instant": true,
+          "format": "table"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "((((max by(node) (max_over_time((max by(node) (kube_node_status_condition{condition=\"Ready\", status=~\"false|unknown\", node=~\"$node\"}) == 1)[$__range:30s])) > 0) and on(node) (max by(node) (label_replace(changes(node_boot_time_seconds[$__range]) * on(instance) group_left(nodename) max by(instance,nodename) (last_over_time(node_uname_info{nodename=~\"(?i)($node)([.].*)?\"}[$__range])), \"node\", \"$1\", \"nodename\", \"([^.]+).*\")) > 0)) * 0 + 2) or (((max by(node) (max_over_time((max by(node) (kube_node_status_condition{condition=\"Ready\", status=~\"false|unknown\", node=~\"$node\"}) == 1)[$__range:30s])) > 0) and on(node) (max by(node) (max_over_time(((max by(node) (kube_node_status_condition{condition=\"Ready\", status=~\"false|unknown\", node=~\"$node\"}) == 1) * on() group_left() ((count(max by(node) (kube_node_status_condition{condition=\"Ready\", status=~\"false|unknown\"}) == 1) / count(max by(node) (kube_node_status_condition{condition=\"Ready\", status=~\"false|unknown\"}))) > 0.5))[$__range:30s])) > 0)) * 0 + 6) or (((max by(node) (max_over_time((max by(node) (kube_node_status_condition{condition=\"Ready\", status=~\"false|unknown\", node=~\"$node\"}) == 1)[$__range:30s])) > 0) and on(node) ((max by(node) (count_over_time((min by(node) (up{job=\"kubelet\", metrics_path=\"/metrics\", node=~\"$node\"}) == 0)[$__range:30s]) * 30) > 0) and on(node) (max by(node) (count_over_time((min by(node) (label_replace(up{job=\"node-exporter\"} * on(instance) group_left(nodename) max by(instance,nodename) (last_over_time(node_uname_info{nodename=~\"(?i)($node)([.].*)?\"}[6h])), \"node\", \"$1\", \"nodename\", \"([^.]+).*\")) == 0)[$__range:30s]) * 30) > 0))) * 0 + 1) or (((max by(node) (max_over_time((max by(node) (kube_node_status_condition{condition=\"Ready\", status=~\"false|unknown\", node=~\"$node\"}) == 1)[$__range:30s])) > 0) and on(node) (count by(node) (max by(node,condition) (max_over_time((kube_node_status_condition{node=~\"$node\", status=\"true\", condition=~\"MemoryPressure|DiskPressure|PIDPressure|NetworkUnavailable\"} == 1)[$__range:30s]))) > 0)) * 0 + 5) or (((max by(node) (max_over_time((max by(node) (kube_node_status_condition{condition=\"Ready\", status=~\"false|unknown\", node=~\"$node\"}) == 1)[$__range:30s])) > 0) and on(node) (max by(node) (count_over_time((min by(node) (up{job=\"kubelet\", metrics_path=\"/metrics\", node=~\"$node\"}) == 0)[$__range:30s]) * 30) > 0)) * 0 + 3) or ((max by(node) (max_over_time((max by(node) (kube_node_status_condition{condition=\"Ready\", status=~\"false|unknown\", node=~\"$node\"}) == 1)[$__range:30s])) > 0) * 0 + 4))",
+          "legendFormat": "__auto",
+          "refId": "B",
+          "range": false,
+          "instant": true,
+          "format": "table"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "max by(node) (max_over_time(((kube_node_status_condition{condition=\"Ready\", status=\"false\", node=~\"$node\"} == 1) * 1 or (kube_node_status_condition{condition=\"Ready\", status=\"unknown\", node=~\"$node\"} == 1) * 2)[$__range:30s])) and on(node) (max by(node) (max_over_time((max by(node) (kube_node_status_condition{condition=\"Ready\", status=~\"false|unknown\", node=~\"$node\"}) == 1)[$__range:30s])) > 0)",
+          "legendFormat": "__auto",
+          "refId": "C",
+          "range": false,
+          "instant": true,
+          "format": "table"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "max by(node) (count_over_time((max by(node) (kube_node_status_condition{condition=\"Ready\", status=~\"false|unknown\", node=~\"$node\"}) == 1)[$__range:30s]) * 30)",
+          "legendFormat": "__auto",
+          "refId": "D",
+          "range": false,
+          "instant": true,
+          "format": "table"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "ceil(max by(node) (changes((max by(node) (kube_node_status_condition{condition=\"Ready\", status=~\"false|unknown\", node=~\"$node\"}))[$__range:30s])) / 2) and on(node) (max by(node) (max_over_time((max by(node) (kube_node_status_condition{condition=\"Ready\", status=~\"false|unknown\", node=~\"$node\"}) == 1)[$__range:30s])) > 0)",
+          "legendFormat": "__auto",
+          "refId": "E",
+          "range": false,
+          "instant": true,
+          "format": "table"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "min by(node) (min_over_time((timestamp(max by(node) (kube_node_status_condition{condition=\"Ready\", status=~\"false|unknown\", node=~\"$node\"}) == 1))[$__range:30s])) * 1000",
+          "legendFormat": "__auto",
+          "refId": "F",
+          "range": false,
+          "instant": true,
+          "format": "table"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "max by(node) (max_over_time((timestamp(max by(node) (kube_node_status_condition{condition=\"Ready\", status=~\"false|unknown\", node=~\"$node\"}) == 1))[$__range:30s])) * 1000",
+          "legendFormat": "__auto",
+          "refId": "G",
+          "range": false,
+          "instant": true,
+          "format": "table"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "(((max by(node) (label_replace(changes(node_boot_time_seconds[$__range]) * on(instance) group_left(nodename) max by(instance,nodename) (last_over_time(node_uname_info{nodename=~\"(?i)($node)([.].*)?\"}[$__range])), \"node\", \"$1\", \"nodename\", \"([^.]+).*\"))) or on(node) ((max by(node) (max_over_time((max by(node) (kube_node_status_condition{condition=\"Ready\", status=~\"false|unknown\", node=~\"$node\"}) == 1)[$__range:30s])) > 0) * 0)) and on(node) (max by(node) (max_over_time((max by(node) (kube_node_status_condition{condition=\"Ready\", status=~\"false|unknown\", node=~\"$node\"}) == 1)[$__range:30s])) > 0))",
+          "legendFormat": "__auto",
+          "refId": "H",
+          "range": false,
+          "instant": true,
+          "format": "table"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "(((max by(node) (count_over_time((min by(node) (up{job=\"kubelet\", metrics_path=\"/metrics\", node=~\"$node\"}) == 0)[$__range:30s]) * 30)) or on(node) ((max by(node) (max_over_time((max by(node) (kube_node_status_condition{condition=\"Ready\", status=~\"false|unknown\", node=~\"$node\"}) == 1)[$__range:30s])) > 0) * 0)) and on(node) (max by(node) (max_over_time((max by(node) (kube_node_status_condition{condition=\"Ready\", status=~\"false|unknown\", node=~\"$node\"}) == 1)[$__range:30s])) > 0))",
+          "legendFormat": "__auto",
+          "refId": "I",
+          "range": false,
+          "instant": true,
+          "format": "table"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "(((max by(node) (count_over_time((min by(node) (label_replace(up{job=\"node-exporter\"} * on(instance) group_left(nodename) max by(instance,nodename) (last_over_time(node_uname_info{nodename=~\"(?i)($node)([.].*)?\"}[6h])), \"node\", \"$1\", \"nodename\", \"([^.]+).*\")) == 0)[$__range:30s]) * 30)) or on(node) ((max by(node) (max_over_time((max by(node) (kube_node_status_condition{condition=\"Ready\", status=~\"false|unknown\", node=~\"$node\"}) == 1)[$__range:30s])) > 0) * 0)) and on(node) (max by(node) (max_over_time((max by(node) (kube_node_status_condition{condition=\"Ready\", status=~\"false|unknown\", node=~\"$node\"}) == 1)[$__range:30s])) > 0))",
+          "legendFormat": "__auto",
+          "refId": "J",
+          "range": false,
+          "instant": true,
+          "format": "table"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "(((count by(node) (max by(node,condition) (max_over_time((kube_node_status_condition{node=~\"$node\", status=\"true\", condition=~\"MemoryPressure|DiskPressure|PIDPressure|NetworkUnavailable\"} == 1)[$__range:30s])))) or on(node) ((max by(node) (max_over_time((max by(node) (kube_node_status_condition{condition=\"Ready\", status=~\"false|unknown\", node=~\"$node\"}) == 1)[$__range:30s])) > 0) * 0)) and on(node) (max by(node) (max_over_time((max by(node) (kube_node_status_condition{condition=\"Ready\", status=~\"false|unknown\", node=~\"$node\"}) == 1)[$__range:30s])) > 0))",
+          "legendFormat": "__auto",
+          "refId": "K",
+          "range": false,
+          "instant": true,
+          "format": "table"
+        }
+      ],
+      "transformations": [
+        {
+          "id": "merge",
+          "options": {}
+        },
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true,
+              "__name__": true,
+              "job": true,
+              "endpoint": true,
+              "service": true,
+              "instance": true,
+              "uid": true,
+              "metrics_path": true,
+              "prometheus": true
+            },
+            "indexByName": {
+              "Nodo": 0,
+              "Stato ora": 1,
+              "Causa probabile": 2,
+              "Tipo": 3,
+              "Tempo non Ready": 4,
+              "Episodi": 5,
+              "Primo episodio": 6,
+              "Ultimo episodio": 7,
+              "Riavvii": 8,
+              "Kubelet irraggiungibile": 9,
+              "Node-exporter irraggiungibile": 10,
+              "Pressure": 11
+            },
+            "renameByName": {
+              "node": "Nodo",
+              "Value #A": "Stato ora",
+              "Value #B": "Causa probabile",
+              "Value #C": "Tipo",
+              "Value #D": "Tempo non Ready",
+              "Value #E": "Episodi",
+              "Value #F": "Primo episodio",
+              "Value #G": "Ultimo episodio",
+              "Value #H": "Riavvii",
+              "Value #I": "Kubelet irraggiungibile",
+              "Value #J": "Node-exporter irraggiungibile",
+              "Value #K": "Pressure"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "type": "row",
+      "id": 13,
+      "title": "Timeline",
+      "collapsed": false,
+      "panels": [],
+      "gridPos": {
+        "x": 0,
+        "y": 17,
+        "w": 24,
+        "h": 1
+      }
+    },
+    {
+      "type": "timeseries",
+      "id": 14,
+      "title": "Nodi non Ready nel tempo",
+      "description": "Ogni barra è un intervallo breve; il valore 1 per nodo significa che quel nodo è stato non Ready in quell'intervallo (anche solo 30s). Passare il mouse per l'elenco dei nodi. Per la durata vedi la griglia sotto.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 18,
+        "w": 24,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "unit": "short",
+          "decimals": 0,
+          "custom": {
+            "drawStyle": "bars",
+            "lineWidth": 0,
+            "fillOpacity": 90,
+            "showPoints": "never",
+            "spanNulls": false,
+            "gradientMode": "opacity",
+            "stacking": {
+              "mode": "normal",
+              "group": "A"
+            }
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byFrameRefID",
+              "options": "B"
+            },
+            "properties": [
+              {
+                "id": "custom.lineStyle",
+                "value": {
+                  "fill": "dash",
+                  "dash": [
+                    6,
+                    4
+                  ]
+                }
+              },
+              {
+                "id": "custom.fillOpacity",
+                "value": 0
+              },
+              {
+                "id": "custom.drawStyle",
+                "value": "line"
+              },
+              {
+                "id": "custom.stacking",
+                "value": {
+                  "mode": "none",
+                  "group": "B"
+                }
+              },
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "text"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "legend": {
+          "calcs": [
+            "sum"
+          ],
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true,
+          "sortBy": "Total",
+          "sortDesc": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "max by(node) (max_over_time(kube_node_status_condition{condition=\"Ready\", status=~\"false|unknown\", node=~\"$node\"}[$__interval])) > 0",
+          "legendFormat": "{{node}}",
+          "refId": "A",
+          "range": true,
+          "instant": false
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "count(kube_node_info{node=~\"$node\"})",
+          "legendFormat": "Nodi totali",
+          "refId": "B",
+          "range": true,
+          "instant": false
+        }
+      ],
+      "interval": "1m",
+      "maxDataPoints": 240
+    },
+    {
+      "type": "status-history",
+      "id": 15,
+      "title": "Tempo non Ready per nodo e per fascia oraria",
+      "description": "Ogni riga è un nodo, ogni cella una fascia di tempo (24h = fasce da 30 min). Il numero è il tempo in cui il nodo è stato NotReady/Unknown in quella fascia. Cella vuota verde = sempre Ready. Colonne con più celle colorate = più nodi insieme = causa comune (control plane).",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 26,
+        "w": 24,
+        "h": 11
+      },
+      "interval": "5m",
+      "maxDataPoints": 48,
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 1
+              },
+              {
+                "color": "red",
+                "value": 120
+              }
+            ]
+          },
+          "unit": "s",
+          "decimals": 0,
+          "custom": {
+            "lineWidth": 1,
+            "fillOpacity": 80
+          },
+          "mappings": [
+            {
+              "type": "value",
+              "options": {
+                "0": {
+                  "text": " ",
+                  "color": "green",
+                  "index": 0
+                }
+              }
+            }
+          ]
+        },
+        "overrides": []
+      },
+      "options": {
+        "showValue": "auto",
+        "rowHeight": 0.85,
+        "colWidth": 0.92,
+        "legend": {
+          "showLegend": false
+        },
+        "tooltip": {
+          "mode": "single"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "(count_over_time((max by(node) (kube_node_status_condition{condition=\"Ready\", status=~\"false|unknown\", node=~\"$node\"}) == 1)[$__interval:30s]) * 30) or on(node) (max by(node) (kube_node_info{node=~\"$node\"}) * 0)",
+          "legendFormat": "{{node}}",
+          "refId": "A",
+          "range": true,
+          "instant": false
+        }
+      ]
+    },
+    {
+      "type": "status-history",
+      "id": 16,
+      "title": "Kubelet irraggiungibile per fascia",
+      "description": "Tempo in cui Prometheus non riusciva a leggere il kubelet del nodo.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 37,
+        "w": 12,
+        "h": 11
+      },
+      "interval": "5m",
+      "maxDataPoints": 48,
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 1
+              },
+              {
+                "color": "red",
+                "value": 120
+              }
+            ]
+          },
+          "unit": "s",
+          "decimals": 0,
+          "custom": {
+            "lineWidth": 1,
+            "fillOpacity": 80
+          },
+          "mappings": [
+            {
+              "type": "value",
+              "options": {
+                "0": {
+                  "text": " ",
+                  "color": "green",
+                  "index": 0
+                }
+              }
+            }
+          ]
+        },
+        "overrides": []
+      },
+      "options": {
+        "showValue": "auto",
+        "rowHeight": 0.85,
+        "colWidth": 0.92,
+        "legend": {
+          "showLegend": false
+        },
+        "tooltip": {
+          "mode": "single"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "(count_over_time((min by(node) (up{job=\"kubelet\", metrics_path=\"/metrics\", node=~\"$node\"}) == 0)[$__interval:30s]) * 30) or on(node) (max by(node) (kube_node_info{node=~\"$node\"}) * 0)",
+          "legendFormat": "{{node}}",
+          "refId": "A",
+          "range": true,
+          "instant": false
+        }
+      ]
+    },
+    {
+      "type": "status-history",
+      "id": 17,
+      "title": "Node-exporter irraggiungibile per fascia",
+      "description": "Kubelet colorato e node-exporter verde nella stessa cella = nodo acceso, kubelet bloccato o senza accesso all'apiserver. Entrambi colorati = nodo irraggiungibile.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 37,
+        "w": 12,
+        "h": 11
+      },
+      "interval": "5m",
+      "maxDataPoints": 48,
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 1
+              },
+              {
+                "color": "red",
+                "value": 120
+              }
+            ]
+          },
+          "unit": "s",
+          "decimals": 0,
+          "custom": {
+            "lineWidth": 1,
+            "fillOpacity": 80
+          },
+          "mappings": [
+            {
+              "type": "value",
+              "options": {
+                "0": {
+                  "text": " ",
+                  "color": "green",
+                  "index": 0
+                }
+              }
+            }
+          ]
+        },
+        "overrides": []
+      },
+      "options": {
+        "showValue": "auto",
+        "rowHeight": 0.85,
+        "colWidth": 0.92,
+        "legend": {
+          "showLegend": false
+        },
+        "tooltip": {
+          "mode": "single"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "(count_over_time((min by(node) (label_replace(up{job=\"node-exporter\"} * on(instance) group_left(nodename) max by(instance,nodename) (last_over_time(node_uname_info{nodename=~\"(?i)($node)([.].*)?\"}[6h])), \"node\", \"$1\", \"nodename\", \"([^.]+).*\")) == 0)[$__interval:30s]) * 30) or on(node) (max by(node) (kube_node_info{node=~\"$node\"}) * 0)",
+          "legendFormat": "{{node}}",
+          "refId": "A",
+          "range": true,
+          "instant": false
+        }
+      ]
+    },
+    {
+      "type": "status-history",
+      "id": 18,
+      "title": "Pressure per fascia",
+      "description": "Tempo con Memory/Disk/PID pressure o NetworkUnavailable attiva. Il tipo è nella tabella Dettaglio per nodo.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 48,
+        "w": 24,
+        "h": 8
+      },
+      "interval": "5m",
+      "maxDataPoints": 48,
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 1
+              },
+              {
+                "color": "red",
+                "value": 120
+              }
+            ]
+          },
+          "unit": "s",
+          "decimals": 0,
+          "custom": {
+            "lineWidth": 1,
+            "fillOpacity": 80
+          },
+          "mappings": [
+            {
+              "type": "value",
+              "options": {
+                "0": {
+                  "text": " ",
+                  "color": "green",
+                  "index": 0
+                }
+              }
+            }
+          ]
+        },
+        "overrides": []
+      },
+      "options": {
+        "showValue": "auto",
+        "rowHeight": 0.85,
+        "colWidth": 0.92,
+        "legend": {
+          "showLegend": false
+        },
+        "tooltip": {
+          "mode": "single"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "(count_over_time((max by(node) (kube_node_status_condition{node=~\"$node\", status=\"true\", condition=~\"MemoryPressure|DiskPressure|PIDPressure|NetworkUnavailable\"}) == 1)[$__interval:30s]) * 30) or on(node) (max by(node) (kube_node_info{node=~\"$node\"}) * 0)",
+          "legendFormat": "{{node}}",
+          "refId": "A",
+          "range": true,
+          "instant": false
+        }
+      ]
+    },
+    {
+      "type": "row",
+      "id": 19,
+      "title": "Analisi kubelet e control plane",
+      "collapsed": false,
+      "panels": [],
+      "gridPos": {
+        "x": 0,
+        "y": 56,
+        "w": 24,
+        "h": 1
+      }
+    },
+    {
+      "type": "timeseries",
+      "id": 20,
+      "title": "Latenza kubelet → apiserver (p99)",
+      "description": "Tempo di risposta dell'apiserver alle chiamate del kubelet. Picchi > 5-10s causano il mancato rinnovo del Lease.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 57,
+        "w": 12,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "unit": "s",
+          "decimals": 2,
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 1,
+            "fillOpacity": 10,
+            "showPoints": "never",
+            "spanNulls": false,
+            "gradientMode": "opacity",
+            "thresholdsStyle": {
+              "mode": "dashed"
+            }
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 1
+              },
+              {
+                "color": "red",
+                "value": 5
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ],
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true,
+          "sortBy": "Max",
+          "sortDesc": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "histogram_quantile(0.99, sum by(node, le) (rate(rest_client_request_duration_seconds_bucket{job=\"kubelet\", node=~\"$node\"}[$__rate_interval])))",
+          "legendFormat": "{{node}}",
+          "refId": "A",
+          "range": true,
+          "instant": false
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "id": 21,
+      "title": "Errori kubelet → apiserver",
+      "description": "Chiamate fallite o in timeout dal kubelet verso l'apiserver.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 57,
+        "w": 12,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "unit": "reqps",
+          "decimals": 3,
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 1,
+            "fillOpacity": 10,
+            "showPoints": "never",
+            "spanNulls": false,
+            "gradientMode": "opacity"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ],
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true,
+          "sortBy": "Max",
+          "sortDesc": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "sum by(node, code) (rate(rest_client_requests_total{job=\"kubelet\", node=~\"$node\", code!~\"2..\"}[$__rate_interval])) > 0",
+          "legendFormat": "{{node}} · {{code}}",
+          "refId": "A",
+          "range": true,
+          "instant": false
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "id": 22,
+      "title": "Apiserver: latenza aggiornamento Lease (p99)",
+      "description": "",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 65,
+        "w": 12,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "unit": "s",
+          "decimals": 2,
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 1,
+            "fillOpacity": 10,
+            "showPoints": "never",
+            "spanNulls": false,
+            "gradientMode": "opacity",
+            "thresholdsStyle": {
+              "mode": "dashed"
+            }
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 1
+              },
+              {
+                "color": "red",
+                "value": 5
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ],
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true,
+          "sortBy": "Max",
+          "sortDesc": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "histogram_quantile(0.99, sum by(instance, le) (rate(apiserver_request_duration_seconds_bucket{resource=\"leases\", verb=~\"PUT|UPDATE\"}[$__rate_interval])))",
+          "legendFormat": "{{instance}}",
+          "refId": "A",
+          "range": true,
+          "instant": false
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "id": 23,
+      "title": "Apiserver: latenza etcd (p99)",
+      "description": "Latenza delle operazioni etcd misurata dall'apiserver. Valori alti = etcd lento (disco manager, elezioni leader).",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 65,
+        "w": 12,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "unit": "s",
+          "decimals": 2,
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 1,
+            "fillOpacity": 10,
+            "showPoints": "never",
+            "spanNulls": false,
+            "gradientMode": "opacity",
+            "thresholdsStyle": {
+              "mode": "dashed"
+            }
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 0.1
+              },
+              {
+                "color": "red",
+                "value": 0.5
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ],
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true,
+          "sortBy": "Max",
+          "sortDesc": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "histogram_quantile(0.99, sum by(instance, le) (rate(etcd_request_duration_seconds_bucket[$__rate_interval])))",
+          "legendFormat": "{{instance}}",
+          "refId": "A",
+          "range": true,
+          "instant": false
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "id": 24,
+      "title": "Kubelet: PLEG relist (p95)",
+      "description": "",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 73,
+        "w": 12,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "unit": "s",
+          "decimals": 2,
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 1,
+            "fillOpacity": 10,
+            "showPoints": "never",
+            "spanNulls": false,
+            "gradientMode": "opacity",
+            "thresholdsStyle": {
+              "mode": "dashed"
+            }
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 1
+              },
+              {
+                "color": "red",
+                "value": 3
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ],
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true,
+          "sortBy": "Max",
+          "sortDesc": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "histogram_quantile(0.95, sum by(node, le) (rate(kubelet_pleg_relist_duration_seconds_bucket{node=~\"$node\"}[$__rate_interval])))",
+          "legendFormat": "{{node}}",
+          "refId": "A",
+          "range": true,
+          "instant": false
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "id": 25,
+      "title": "Kubelet: errori operazioni runtime",
+      "description": "",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 73,
+        "w": 12,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "unit": "ops",
+          "decimals": 3,
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 1,
+            "fillOpacity": 10,
+            "showPoints": "never",
+            "spanNulls": false,
+            "gradientMode": "opacity"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ],
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true,
+          "sortBy": "Max",
+          "sortDesc": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "sum by(node, operation_type) (rate(kubelet_runtime_operations_errors_total{node=~\"$node\"}[$__rate_interval])) > 0",
+          "legendFormat": "{{node}} · {{operation_type}}",
+          "refId": "A",
+          "range": true,
+          "instant": false
+        }
+      ]
+    },
+    {
+      "type": "row",
+      "id": 26,
+      "title": "Risorse del nodo (node-exporter)",
+      "collapsed": false,
+      "panels": [],
+      "gridPos": {
+        "x": 0,
+        "y": 81,
+        "w": 24,
+        "h": 1
+      }
+    },
+    {
+      "type": "timeseries",
+      "id": 27,
+      "title": "CPU utilizzata %",
+      "description": "",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 82,
+        "w": 12,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "unit": "percent",
+          "decimals": 1,
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 1,
+            "fillOpacity": 10,
+            "showPoints": "never",
+            "spanNulls": false,
+            "gradientMode": "opacity",
+            "thresholdsStyle": {
+              "mode": "dashed"
+            }
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 85
+              },
+              {
+                "color": "red",
+                "value": 95
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ],
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true,
+          "sortBy": "Max",
+          "sortDesc": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "max by(nodename) (\n  100 * (1 - avg by(instance) (rate(node_cpu_seconds_total{mode=\"idle\"}[$__rate_interval])))\n  * on(instance) group_left(nodename) max by(instance,nodename) (node_uname_info{nodename=~\"(?i)($node)([.].*)?\"})\n)",
+          "legendFormat": "{{nodename}}",
+          "refId": "A",
+          "range": true,
+          "instant": false
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "id": 28,
+      "title": "RAM utilizzata %",
+      "description": "",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 82,
+        "w": 12,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "unit": "percent",
+          "decimals": 1,
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 1,
+            "fillOpacity": 10,
+            "showPoints": "never",
+            "spanNulls": false,
+            "gradientMode": "opacity",
+            "thresholdsStyle": {
+              "mode": "dashed"
+            }
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 85
+              },
+              {
+                "color": "red",
+                "value": 95
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ],
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true,
+          "sortBy": "Max",
+          "sortDesc": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "max by(nodename) (\n  100 * (1 - node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)\n  * on(instance) group_left(nodename) max by(instance,nodename) (node_uname_info{nodename=~\"(?i)($node)([.].*)?\"})\n)",
+          "legendFormat": "{{nodename}}",
+          "refId": "A",
+          "range": true,
+          "instant": false
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "id": 29,
+      "title": "Latenza scrittura disco (ms)",
+      "description": "",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 90,
+        "w": 12,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "unit": "ms",
+          "decimals": 1,
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 1,
+            "fillOpacity": 10,
+            "showPoints": "never",
+            "spanNulls": false,
+            "gradientMode": "opacity",
+            "thresholdsStyle": {
+              "mode": "dashed"
+            }
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 20
+              },
+              {
+                "color": "red",
+                "value": 100
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ],
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true,
+          "sortBy": "Max",
+          "sortDesc": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "max by(nodename,device) (\n  1000 * rate(node_disk_write_time_seconds_total{device!~\"dm-.*|sr.*|loop.*\"}[$__rate_interval]) / clamp_min(rate(node_disk_writes_completed_total{device!~\"dm-.*|sr.*|loop.*\"}[$__rate_interval]), 0.001)\n  * on(instance) group_left(nodename) max by(instance,nodename) (node_uname_info{nodename=~\"(?i)($node)([.].*)?\"})\n)",
+          "legendFormat": "{{nodename}} · {{device}}",
+          "refId": "A",
+          "range": true,
+          "instant": false
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "id": 30,
+      "title": "Rete: errori e pacchetti scartati",
+      "description": "",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 90,
+        "w": 12,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "unit": "pps",
+          "decimals": 3,
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 1,
+            "fillOpacity": 10,
+            "showPoints": "never",
+            "spanNulls": false,
+            "gradientMode": "opacity"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ],
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true,
+          "sortBy": "Max",
+          "sortDesc": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "max by(nodename) (\n  sum by(instance) (rate(node_network_receive_errs_total{device!~\"lo|veth.*|cali.*|docker.*\"}[$__rate_interval]) + rate(node_network_transmit_errs_total{device!~\"lo|veth.*|cali.*|docker.*\"}[$__rate_interval]) + rate(node_network_receive_drop_total{device!~\"lo|veth.*|cali.*|docker.*\"}[$__rate_interval]))\n  * on(instance) group_left(nodename) max by(instance,nodename) (node_uname_info{nodename=~\"(?i)($node)([.].*)?\"})\n)",
+          "legendFormat": "{{nodename}}",
+          "refId": "A",
+          "range": true,
+          "instant": false
+        }
+      ]
+    }
+  ]
+}
